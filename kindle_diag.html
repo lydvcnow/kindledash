@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>diag</title>
+</head>
+<body style="background:#f0ece0;padding:20px;font-family:sans-serif;">
+<p style="font-size:24px;margin-bottom:16px;" id="sz"></p>
+<p style="font-size:24px;margin-bottom:16px;" id="dpr"></p>
+<p style="font-size:24px;margin-bottom:16px;" id="ua"></p>
+<script>
+var w=window.innerWidth, h=window.innerHeight;
+var sw=screen.width, sh=screen.height;
+var dpr=window.devicePixelRatio||1;
+document.getElementById('sz').textContent=
+  'inner: '+w+' x '+h+'  |  screen: '+sw+' x '+sh;
+document.getElementById('dpr').textContent=
+  'devicePixelRatio: '+dpr+'  |  css px: '+(sw/dpr)+' x '+(sh/dpr);
+document.getElementById('ua').textContent=
+  navigator.userAgent;
+</script>
+</body>
+</html>
