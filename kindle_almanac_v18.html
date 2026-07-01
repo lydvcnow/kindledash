@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-Hans" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日历</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#f0ece0;overflow:hidden;}
+#root{
+  width:1072px;height:1368px;
+  background:#f0ece0;color:#111;
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  transform-origin:top left;
+}
+.ln{width:100%;height:1px;background:#aaa8a0;display:block;}
+
+#t-chong{width:100%;border-collapse:collapse;table-layout:fixed;direction:ltr;}
+#t-chong td{padding:25px 0 21px;vertical-align:top;}
+#t-chong td:first-child{padding-left:50px;padding-right:18px;width:50%;border-right:1px solid #ccc9bc;}
+#t-chong td:last-child{padding-left:36px;width:50%;}
+.cm-main{font-size:46px;color:#1a1a1a;letter-spacing:1px;line-height:1;display:inline;}
+.cm-label{font-size:46px;color:#111;display:inline;}
+.cm-sub{font-size:36px;color:#111;line-height:1;display:inline;margin-left:14px;}
+.sc-yun{font-size:27px;color:#111;margin-top:9px;}
+
+#t-yiji{width:100%;border-collapse:collapse;table-layout:fixed;direction:ltr;}
+#t-yiji td{padding:18px 0 21px;vertical-align:top;}
+#t-yiji td:first-child{padding-left:50px;padding-right:18px;width:50%;border-right:1px solid #ccc9bc;}
+#t-yiji td:last-child{padding-left:36px;width:50%;}
+.yl{font-size:46px;color:#111;display:inline;}
+.yi{font-size:46px;color:#1a1a1a;letter-spacing:4px;line-height:1;display:inline;margin-right:25px;}
+.ji{font-size:46px;color:#111;letter-spacing:4px;line-height:1;display:inline;margin-right:25px;}
+
+#s-jieqi{font-size:39px;color:#111;letter-spacing:4px;text-align:center;padding:18px 50px;display:block;}
+
+#s-mid{text-align:center;padding:0 50px;display:block;}
+#time{font-size:232px;font-weight:300;letter-spacing:-9px;line-height:1;color:#080808;text-align:center;width:100%;}
+#s-lunar{margin-top:18px;}
+#lunar-date{font-size:32px;color:#111;letter-spacing:1px;display:inline;}
+#ganzhi{font-size:27px;color:#111;letter-spacing:4px;display:inline;margin-left:36px;}
+
+#s-cal{padding:36px 72px 0;display:block;}
+#cal-header{text-align:center;font-size:42px;letter-spacing:1px;color:#111;margin-bottom:24px;font-weight:500;}
+#cal-table{width:100%;border-collapse:collapse;table-layout:fixed;direction:ltr;}
+#cal-table td{text-align:center;padding:12px 0;line-height:1.2;}
+.cal-dow{font-size:39px;color:#111;font-weight:500;letter-spacing:1px;}
+.cal-day{font-size:45px;color:#111;font-weight:500;}
+.cal-today{font-size:45px;font-weight:700;background:#1a1a1a;color:#f0ece0;border-radius:6px;}
+.cal-other{font-size:45px;color:#bbb;font-weight:400;}
+.cal-jq{text-decoration:underline;text-underline-offset:6px;}
+.cal-holiday{font-size:45px;color:#111;font-weight:500;border:3px solid #111;border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="root">
+
+  <table id="t-chong" dir="ltr"><tr>
+    <td>
+      <span class="cm-label">冲煞：</span><span class="cm-main" id="chong-sx"></span><span class="cm-sub" id="sha-dir"></span>
+    </td>
+    <td>
+      <span class="cm-label">时辰：</span><span class="cm-main" id="sc-name"></span><span class="cm-sub" id="sc-range"></span>
+      <div class="sc-yun" id="sc-yun"></div>
+    </td>
+  </tr></table>
+  <div class="ln"></div>
+
+  <table id="t-yiji" dir="ltr"><tr>
+    <td>
+      <span class="yl">宜：</span><span id="yi-list"></span>
+    </td>
+    <td>
+      <span class="yl">忌：</span><span id="ji-list"></span>
+    </td>
+  </tr></table>
+  <div class="ln"></div>
+
+  <div id="s-jieqi"></div>
+  <div class="ln"></div>
+
+  <div id="s-mid">
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;direction:ltr;">
+      <tr>
+        <td style="width:22%;text-align:center;vertical-align:middle;padding-left:20px;">
+          <div style="font-size:80px;color:#111;">日出</div><div style="font-size:60px;color:#111;">HMB</div>
+          <div style="font-size:60px;color:#111;font-weight:300;" id="sunrise">--:--</div>
+        </td>
+        <td style="width:56%;text-align:center;vertical-align:middle;padding-right:60px;">
+          <div id="time">--:--</div>
+        </td>
+        <td style="width:22%;text-align:center;vertical-align:middle;padding-right:20px;">
+          <div style="font-size:80px;color:#111;">日落</div><div style="font-size:60px;color:#111;">HMB</div>
+          <div style="font-size:60px;color:#111;font-weight:300;" id="sunset">--:--</div>
+        </td>
+      </tr>
+    </table>
+    <div id="s-lunar">
+      <span id="lunar-date"></span><span id="ganzhi"></span>
+    </div>
+  </div>
+  <div class="ln" style="margin-top:10px;"></div>
+
+  <div id="s-cal">
+    <div id="cal-header"></div>
+    <table id="cal-table" dir="ltr"></table>
+  </div>
+</div>
+<script>
+var _tzOffset = 0;
+var _serverBasetime = 0;
+var _localBasetime = 0;
+var _useServer = false;
+var _serverHour = 0;
+var _serverMinute = 0;
+var _serverBasetime = 0;
+function worldtimeCallback(d){
+  try{
+    // datetime格式: "2024-06-28T15:43:00.000000-07:00"
+    var dt = d.datetime;
+    var timePart = dt.split('T')[1];
+    _serverHour = parseInt(timePart.split(':')[0], 10);
+    _serverMinute = parseInt(timePart.split(':')[1], 10);
+    _serverBasetime = new Date().getTime();
+    _useServer = true;
+    update();
+  }catch(e){}
+}
+function initTime(){
+  try{
+    var s = document.createElement('script');
+    s.src = 'https://worldtimeapi.org/api/timezone/America/Los_Angeles?callback=worldtimeCallback';
+    s.onerror = function(){};
+    document.body.appendChild(s);
+  }catch(e){}
+}
+
+
+var TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+var DZ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+var SX=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+var LM=['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+var LD=['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+  '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+  '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+var ME=['January','February','March','April','May','June',
+        'July','August','September','October','November','December'];
+var ME_CN=['一月','二月','三月','四月','五月','六月',
+           '七月','八月','九月','十月','十一月','十二月'];
+var LI=[
+  0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+  0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+  0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+  0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+  0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+  0x06ca0,0x0b550,0x15355,0x04da0,0x0a5d0,0x14573,0x052d0,0x0a9a8,0x0e950,0x06aa0,
+  0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+  0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+  0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+  0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06aa0,0x0a6b6,0x056a0,0x02b40,0x0aae4,
+  0x0a570,0x05260,0x0f263,0x0d950,0x0da57,0x056a0,0x096d0,0x04bd4,0x04ad0,0x0a4d0,
+  0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,
+  0x0aa50,0x1b255,0x06d20,0x0ada0
+];
+function getLunar(date){
+  var BASE=new Date(1900,0,31),offset=Math.floor((date-BASE)/86400000);
+  var i,leap=false,temp=0,lm=0,year;
+  for(i=1900;i<2100&&offset>0;i++){
+    temp=(LI[i-1900]&0xf)?384:354;
+    if(LI[i-1900]&0xf0000){lm=(LI[i-1900]&0xf0000)>>16;temp+=lm>0?((LI[i-1900]&0x10000)?30:29):0;}
+    offset-=temp;
+  }
+  if(offset<0){offset+=temp;i--;}
+  year=i;lm=(LI[i-1900]&0xf0000)>>16;leap=false;
+  for(i=1;i<13&&offset>0;i++){
+    if(lm>0&&i==lm+1&&!leap){i--;leap=true;}
+    temp=(LI[year-1900]&(0x10000>>i))?30:29;
+    if(leap&&i==lm+1)leap=false;
+    offset-=temp;
+  }
+  if(offset==0&&lm>0&&i==lm+1){if(leap)leap=false;else{leap=true;i--;}}
+  if(offset<0){offset+=temp;i--;}
+  return{year:year,month:i,day:offset+1,leap:leap};
+}
+function getGZ(date){
+  var y=date.getFullYear(),m=date.getMonth()+1;
+  var yi=(y-1984)%60;if(yi<0)yi+=60;
+  var mb=(y-1900)*12+m+12;
+  var db=Math.floor((date-new Date(1900,0,1))/86400000)+40;
+  return{year:TG[yi%10]+DZ[yi%12]+'（'+SX[yi%12]+'）年',
+    month:TG[mb%10]+DZ[mb%12]+'月',day:TG[db%10]+DZ[db%12]+'日',dz:db%12};
+}
+var CSX=['马','羊','猴','鸡','狗','猪','鼠','牛','虎','兔','龙','蛇'];
+var SHA=['南','北','西','东','南','北','西','东','南','北','西','东'];
+var SCN=['子时','丑时','寅时','卯时','辰时','巳时','午时','未时','申时','酉时','戌时','亥时'];
+var SCR=['23–01','01–03','03–05','05–07','07–09','09–11',
+         '11–13','13–15','15–17','17–19','19–21','21–23'];
+var SCY=['宜静养，深夜勿扰','丑牛耕耘，宜早起','寅虎精神，适运动',
+         '卯兔祥和，宜见人','辰龙奋发，宜谋事','巳蛇蜕变，宜决断',
+         '午马扬蹄，宜出行','未羊安逸，宜休憩','申猴机敏，宜交涉',
+         '酉鸡归巢，宜收整','戌狗守夜，宜陪伴','亥猪安眠，宜养神'];
+var JQ=[
+  [1,6,'小寒'],[1,20,'大寒'],[2,4,'立春'],[2,19,'雨水'],
+  [3,6,'惊蛰'],[3,21,'春分'],[4,5,'清明'],[4,20,'谷雨'],
+  [5,6,'立夏'],[5,21,'小满'],[6,6,'芒种'],[6,21,'夏至'],
+  [7,7,'小暑'],[7,23,'大暑'],[8,7,'立秋'],[8,23,'处暑'],
+  [9,8,'白露'],[9,23,'秋分'],[10,8,'寒露'],[10,23,'霜降'],
+  [11,7,'立冬'],[11,22,'小雪'],[12,7,'大雪'],[12,22,'冬至']
+];
+function getJQ(mo,da){
+  for(var i=0;i<JQ.length;i++){
+    if(JQ[i][0]==mo&&JQ[i][1]==da) return '今日节气 · '+JQ[i][2];
+    if(JQ[i][0]==mo&&JQ[i][1]>da)  return '距 '+JQ[i][2]+' 还有 '+(JQ[i][1]-da)+' 天';
+    if(JQ[i][0]==mo+1)              return '距 '+JQ[i][2]+' 约 '+(JQ[i][1]+(30-da))+' 天';
+  }
+  return '';
+}
+function isJQ(mo,da){
+  for(var i=0;i<JQ.length;i++){if(JQ[i][0]==mo&&JQ[i][1]==da)return true;}
+  return false;
+}
+
+/* 美国假期：固定 + 浮动 */
+function getNthWeekday(year, month, weekday, n) {
+  /* 第n个星期几，weekday:0=日,1=一...  n:-1=最后一个 */
+  if(n > 0) {
+    var d = new Date(year, month-1, 1);
+    var diff = (weekday - d.getDay() + 7) % 7;
+    return 1 + diff + (n-1)*7;
+  } else {
+    var last = new Date(year, month, 0).getDate();
+    var d = new Date(year, month-1, last);
+    var diff = (d.getDay() - weekday + 7) % 7;
+    return last - diff;
+  }
+}
+function getUSHolidays(year) {
+  var h = {};
+  function key(m,d){ return m+'/'+d; }
+  // 固定假期
+  h[key(1,1)]='New Year';
+  h[key(6,19)]='Juneteenth';
+  h[key(7,4)]='Independence';
+  h[key(11,11)]='Veterans Day';
+  h[key(12,25)]='Christmas';
+  // 浮动假期
+  h[key(1, getNthWeekday(year,1,1,3))]='MLK Day';
+  h[key(2, getNthWeekday(year,2,1,3))]="Presidents'";
+  h[key(5, getNthWeekday(year,5,1,-1))]='Memorial Day';
+  h[key(9, getNthWeekday(year,9,1,1))]='Labor Day';
+  h[key(10,getNthWeekday(year,10,1,2))]='Columbus Day';
+  h[key(11,getNthWeekday(year,11,4,4))]='Thanksgiving';
+  return h;
+}
+
+var YP=['出行','祈福','嫁娶','开业','动土','裁衣','沐浴','纳财','会友','立券','移徙','修造','栽种','开仓','置业'];
+var JP=['动土','安葬','词讼','伐木','开仓','破土','祭祀','嫁娶','移徙','造屋','掘井','入宅','行丧','开渠'];
+function getYJ(date){
+  var s=date.getFullYear()*10000+(date.getMonth()+1)*100+date.getDate();
+  var yi=[],ji=[];
+  for(var i=0;i<3;i++) yi.push(YP[(s*[3,7,11][i]+i*37)%YP.length]);
+  for(var i=0;i<3;i++) ji.push(JP[(s*[2,5,9][i]+i*23+5)%JP.length]);
+  return{yi:yi,ji:ji};
+}
+
+function buildCal(y, mo, tod){
+  var t = document.getElementById('cal-table');
+  t.innerHTML = '';
+  document.getElementById('cal-header').textContent = y+'年  '+ME_CN[mo]+'  /  '+ME[mo];
+  var holidays = getUSHolidays(y);
+  var dows = ['日','一','二','三','四','五','六'];
+  var hr = t.insertRow(-1);
+  for(var i=0;i<7;i++){
+    var c=hr.insertCell(i); c.className='cal-dow'; c.textContent=dows[i];
+  }
+  var fd=new Date(y,mo,1).getDay();
+  var dim=new Date(y,mo+1,0).getDate();
+  var pd=new Date(y,mo,0).getDate();
+  var cells=[];
+  for(var i=0;i<fd;i++) cells.push({n:pd-fd+1+i, cls:'cal-other', sub:''});
+  for(var i=1;i<=dim;i++){
+    var hkey=(mo+1)+'/'+i;
+    var isH=!!holidays[hkey];
+    var cls=i===tod?'cal-today':(isH?'cal-holiday':'cal-day');
+    if(isJQ(mo+1,i)&&i!==tod) cls+=' cal-jq';
+    cells.push({n:i, cls:cls, sub: isH?holidays[hkey]:''});
+  }
+  var rem=(7-cells.length%7)%7;
+  for(var i=1;i<=rem;i++) cells.push({n:i, cls:'cal-other', sub:''});
+  var row;
+  for(var i=0;i<cells.length;i++){
+    if(i%7===0) row=t.insertRow(-1);
+    var c=row.insertCell(i%7);
+    c.className=cells[i].cls;
+    c.textContent=cells[i].n;
+    if(cells[i].sub){
+      var s=document.createElement('div');
+      s.style.cssText='font-size:9px;color:#666;line-height:1;margin-top:1px;white-space:nowrap;overflow:hidden;';
+      s.textContent=cells[i].sub;
+      c.appendChild(s);
+    }
+  }
+}
+
+
+function getSunTime(date, lat, lon, isSunrise){
+  var rad = Math.PI/180;
+  var doy = Math.floor((date - new Date(date.getFullYear(),0,0))/86400000);
+  var B = 360/365*(doy-81)*rad;
+  var et = 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+  var ha = Math.acos(-Math.tan(lat*rad)*Math.tan(23.45*Math.sin(B)*rad))/rad;
+  var offset = lon/15 + et/60;
+  var utcH = isSunrise ? (12-ha/15-offset) : (12+ha/15-offset);
+  var TZ_OFF = -7;
+  var localH = utcH + TZ_OFF;
+  if(localH<0) localH+=24;
+  if(localH>=24) localH-=24;
+  var hh=Math.floor(localH);
+  var mm=Math.floor((localH-hh)*60);
+  return pad(hh)+':'+pad(mm);
+}
+function pad(n){return n<10?'0'+n:''+n;}
+function update(){
+  var now=new Date(), h, m;
+  // UTC-7 (PDT夏令时), 冬令时改成-8
+  var TZ_OFFSET = -7;
+  h = (now.getUTCHours() + TZ_OFFSET + 24) % 24;
+  m = now.getUTCMinutes();
+
+  var mo=now.getMonth()+1, da=now.getDate();
+  document.getElementById('time').textContent=pad(h)+':'+pad(m);
+  var lu=getLunar(now);
+  document.getElementById('lunar-date').textContent='农历 '+(lu.leap?'闰':'')+LM[lu.month-1]+'月'+LD[lu.day-1];
+  var gz=getGZ(now);
+  document.getElementById('ganzhi').textContent='  '+gz.year+'  '+gz.month+'  '+gz.day;
+  document.getElementById('chong-sx').textContent='冲'+CSX[gz.dz];
+  document.getElementById('sha-dir').textContent='  煞'+SHA[gz.dz]+'方';
+  var sci=h==23?0:Math.floor((h+1)/2);
+  document.getElementById('sc-name').textContent=SCN[sci];
+  document.getElementById('sc-range').textContent='  '+SCR[sci];
+  document.getElementById('sc-yun').textContent=SCY[sci];
+  document.getElementById('s-jieqi').textContent=getJQ(mo,da);
+  document.getElementById('sunrise').textContent=getSunTime(now,37.4936,-122.4286,true);
+  document.getElementById('sunset').textContent=getSunTime(now,37.4936,-122.4286,false);
+  var yj=getYJ(now);
+  document.getElementById('yi-list').innerHTML=yj.yi.map(function(w){return'<span class="yi">'+w+'</span>';}).join('');
+  document.getElementById('ji-list').innerHTML=yj.ji.map(function(w){return'<span class="ji">'+w+'</span>';}).join('');
+  buildCal(now.getFullYear(), now.getMonth(), da);
+}
+update();
+setInterval(update, 60000);
+</script>
+</body>
+</html>
